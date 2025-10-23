@@ -6,11 +6,26 @@ import { Users, Search, Target, Zap, Globe, Heart, Lightbulb } from 'lucide-reac
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
+interface PBLProject {
+  id: string
+  title: string
+  description: string | null
+  max_participants: number
+  current_participants: number
+  status: string
+  created_at: string
+}
+
 export default function PBLPage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [dbProjects, setDbProjects] = useState<PBLProject[]>([])
+  const [selectedProject, setSelectedProject] = useState<PBLProject | null>(null)
+  const [showProjectModal, setShowProjectModal] = useState(false)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
+  const [isJoining, setIsJoining] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -25,6 +40,7 @@ export default function PBLPage() {
       try {
         const { data: { user } } = await supabase.auth.getUser()
         setIsAuthenticated(!!user)
+        setCurrentUserId(user?.id || null)
       } catch (error) {
         console.error('检查认证状态失败:', error)
         setIsAuthenticated(false)
@@ -34,6 +50,31 @@ export default function PBLPage() {
     }
 
     checkAuth()
+  }, [supabase])
+
+  // 从数据库读取PBL项目
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('pbl_projects')
+          .select('*')
+          .order('created_at', { ascending: false })
+
+        if (error) {
+          console.error('读取项目失败:', error)
+          return
+        }
+
+        if (data && data.length > 0) {
+          setDbProjects(data as PBLProject[])
+        }
+      } catch (error) {
+        console.error('读取项目异常:', error)
+      }
+    }
+
+    fetchProjects()
   }, [supabase])
 
   // Generate fixed particle configuration
@@ -49,43 +90,43 @@ export default function PBLPage() {
     }))
   }, [isMounted])
 
-  // 示例项目数据
-  const projects = [
+  // 示例项目数据（当数据库没有数据时使用）
+  const exampleProjects = [
     {
-      id: 'project-1',
-      name: '伊卡洛斯行动：声音与意识',
-      theme: '声音疗愈',
+      id: 'example-1',
+      title: '伊卡洛斯行动：声音与意识',
       description: '探索声音频率对人类意识的影响，通过实验验证声音疗愈的科学原理',
-      members: 12,
-      maxMembers: 20,
-      status: 'forming',
-      createdAt: '2025-01-15'
+      max_participants: 20,
+      current_participants: 12,
+      status: 'active',
+      created_at: '2025-01-15T00:00:00Z'
     },
     {
-      id: 'project-2',
-      name: '量子意识实验',
-      theme: '量子物理',
+      id: 'example-2',
+      title: '量子意识实验',
       description: '研究意识与量子场的互动关系，探索意识如何影响物质世界',
-      members: 8,
-      maxMembers: 15,
+      max_participants: 15,
+      current_participants: 8,
       status: 'active',
-      createdAt: '2025-01-10'
+      created_at: '2025-01-10T00:00:00Z'
     },
     {
-      id: 'project-3',
-      name: '冥想神经科学',
-      theme: '神经科学',
+      id: 'example-3',
+      title: '冥想神经科学',
       description: '使用脑电图技术研究冥想对大脑的影响，量化意识觉察的神经基础',
-      members: 15,
-      maxMembers: 20,
+      max_participants: 20,
+      current_participants: 15,
       status: 'active',
-      createdAt: '2025-01-05'
+      created_at: '2025-01-05T00:00:00Z'
     }
   ]
 
+  // 使用数据库数据或示例数据
+  const projects = dbProjects.length > 0 ? dbProjects : exampleProjects
+
   const filteredProjects = projects.filter(project =>
-    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    project.theme.toLowerCase().includes(searchQuery.toLowerCase())
+    project.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()))
   )
 
   if (loading) {
@@ -327,30 +368,30 @@ export default function PBLPage() {
                     </span>
                     <div className="flex items-center space-x-1 text-purple-300">
                       <Users className="w-4 h-4" />
-                      <span className="text-sm">{project.members}/{project.maxMembers}</span>
+                      <span className="text-sm">{project.current_participants}/{project.max_participants}</span>
                     </div>
                   </div>
 
                   <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-purple-300 transition-colors">
-                    {project.name}
+                    {project.title}
                   </h3>
 
-                  <p className="text-purple-200 text-sm mb-4 line-clamp-3">
-                    {project.theme}
-                  </p>
-
-                  <p className="text-purple-300 text-xs mb-4 line-clamp-2">
-                    {project.description}
+                  <p className="text-purple-300 text-sm mb-4 line-clamp-3">
+                    {project.description || '暂无描述'}
                   </p>
 
                   <div className="flex items-center justify-between mb-4">
                     <span className="text-xs text-purple-400">
-                      {new Date(project.createdAt).toLocaleDateString('zh-CN')}
+                      {new Date(project.created_at).toLocaleDateString('zh-CN')}
                     </span>
                   </div>
 
                   {/* 查看详情按钮 */}
                   <button
+                    onClick={() => {
+                      setSelectedProject(project)
+                      setShowProjectModal(true)
+                    }}
                     className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg text-white text-sm font-medium transition-all duration-300 transform hover:scale-102"
                   >
                     查看详情
@@ -371,6 +412,155 @@ export default function PBLPage() {
           )}
         </div>
       </motion.div>
+
+      {/* 项目详情模态框 */}
+      {showProjectModal && selectedProject && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowProjectModal(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-gradient-to-br from-slate-900 to-purple-900 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl border border-purple-500/30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex justify-between items-start mb-6">
+              <div>
+                <h2 className="text-3xl font-bold text-white mb-2">{selectedProject.title}</h2>
+                <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                  selectedProject.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                  selectedProject.status === 'forming' ? 'bg-yellow-500/20 text-yellow-400' :
+                  'bg-gray-500/20 text-gray-400'
+                }`}>
+                  {selectedProject.status === 'active' ? '进行中' :
+                   selectedProject.status === 'forming' ? '正在组建' : '已完成'}
+                </span>
+              </div>
+              <button
+                onClick={() => setShowProjectModal(false)}
+                className="text-gray-400 hover:text-white transition-colors p-2"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-purple-300 mb-2">项目简介</h3>
+                <p className="text-gray-300 leading-relaxed">
+                  {selectedProject.description || '暂无详细描述'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white/5 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <Users className="w-4 h-4 text-purple-400" />
+                    <span className="text-sm text-gray-400">参与人数</span>
+                  </div>
+                  <p className="text-2xl font-bold text-white">
+                    {selectedProject.current_participants} / {selectedProject.max_participants}
+                  </p>
+                </div>
+
+                <div className="bg-white/5 rounded-lg p-4">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <svg className="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    <span className="text-sm text-gray-400">创建时间</span>
+                  </div>
+                  <p className="text-lg font-semibold text-white">
+                    {new Date(selectedProject.created_at).toLocaleDateString('zh-CN')}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-purple-500/10 border border-purple-500/30 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-purple-300 mb-2">📋 项目特色</h4>
+                <ul className="space-y-2 text-sm text-gray-300">
+                  <li className="flex items-start">
+                    <span className="text-purple-400 mr-2">•</span>
+                    <span>跨学科协作，融合多元视角</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-purple-400 mr-2">•</span>
+                    <span>真实项目实践，深度探索学习</span>
+                  </li>
+                  <li className="flex items-start">
+                    <span className="text-purple-400 mr-2">•</span>
+                    <span>全球探索者协作，突破地域限制</span>
+                  </li>
+                </ul>
+              </div>
+
+              <div className="flex gap-4">
+                {isAuthenticated ? (
+                  <button
+                    onClick={async () => {
+                      if (!currentUserId) return
+                      setIsJoining(true)
+                      try {
+                        const { error } = await supabase
+                          .from('project_participants')
+                          .insert({
+                            project_id: selectedProject.id,
+                            user_id: currentUserId,
+                            role: 'participant'
+                          })
+
+                        if (error) {
+                          if (error.code === '23505') {
+                            alert('您已经加入了这个项目！')
+                          } else {
+                            console.error('加入项目失败:', error)
+                            alert('加入项目失败，请稍后重试')
+                          }
+                        } else {
+                          alert('成功加入项目！')
+                          setShowProjectModal(false)
+                          // 重新加载项目列表
+                          const { data } = await supabase
+                            .from('pbl_projects')
+                            .select('*')
+                            .order('created_at', { ascending: false })
+                          if (data) setDbProjects(data as PBLProject[])
+                        }
+                      } catch (error) {
+                        console.error('加入项目异常:', error)
+                        alert('加入项目失败，请稍后重试')
+                      } finally {
+                        setIsJoining(false)
+                      }
+                    }}
+                    disabled={isJoining}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isJoining ? '加入中...' : '🚀 加入项目'}
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setShowProjectModal(false)
+                      router.push('/login?redirect=/pbl')
+                    }}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg text-white font-semibold transition-all duration-300 transform hover:scale-105"
+                  >
+                    登录后加入
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowProjectModal(false)}
+                  className="px-6 py-3 border border-gray-500 hover:border-gray-400 rounded-lg text-gray-300 hover:text-white font-semibold transition-all duration-300"
+                >
+                  关闭
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   )
 }
