@@ -155,7 +155,12 @@ export default function GaiaDialog({ isOpen, onClose }: GaiaDialogProps) {
       if (result.success) {
         console.log(`成功保存聊天记录到 Supabase，消息数量: ${slice.length}`)
       } else {
-        console.error('保存聊天记录到 Supabase 失败:', result.error)
+        // 如果是未登录错误，只在控制台显示警告（游客模式）
+        if (result.error?.includes('未登录')) {
+          console.warn('游客模式：聊天记录不会被保存')
+        } else {
+          console.error('保存聊天记录到 Supabase 失败:', result.error)
+        }
       }
     } catch (error) {
       console.error('保存聊天记录到 Supabase 失败:', error)

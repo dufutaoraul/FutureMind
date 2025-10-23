@@ -3,21 +3,18 @@
 import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles, MessageCircle, TreePine, Users } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import GaiaDialog from '@/components/GaiaDialog'
 
 export default function Home() {
   const [showGaiaDialog, setShowGaiaDialog] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
-  const router = useRouter()
-  const supabase = createClient()
 
-  // 确保只在客户端渲染（修复 hydration error）
+  // 确保只在客户端渲染
   useEffect(() => {
     setIsMounted(true)
   }, [])
 
-  // 生成固定的粒子配置（修复 hydration error）
+  // 生成固定的粒子配置
   const particles = useMemo(() => {
     if (!isMounted) return []
     return [...Array(50)].map((_, i) => ({
@@ -29,31 +26,6 @@ export default function Home() {
       top: Math.random() * 100,
     }))
   }, [isMounted])
-
-  // 检查登录状态并跳转
-  const checkAuthAndNavigate = async (path: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      // 未登录，跳转到登录页并带上redirect参数
-      router.push(`/login?redirect=${encodeURIComponent(path)}`)
-    } else {
-      // 已登录，直接跳转
-      router.push(path)
-    }
-  }
-
-  const handleGaiaClick = async () => {
-    await checkAuthAndNavigate('/portal?tab=gaia')
-  }
-
-  const handlePBLClick = async () => {
-    await checkAuthAndNavigate('/pbl')
-  }
-
-  const handlePortalClick = () => {
-    router.push('/portal')
-  }
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center relative overflow-hidden">
@@ -149,7 +121,7 @@ export default function Home() {
           className="flex flex-col sm:flex-row gap-6 justify-center items-center"
         >
           <button
-            onClick={handleGaiaClick}
+            onClick={() => setShowGaiaDialog(true)}
             className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-semibold text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
           >
             <MessageCircle className="w-5 h-5 inline mr-2" />
@@ -157,16 +129,16 @@ export default function Home() {
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
           </button>
 
-          <button
-            onClick={handlePBLClick}
-            className="group px-8 py-4 border-2 border-purple-400 rounded-full text-purple-300 font-semibold text-lg hover:bg-purple-400 hover:text-white transition-all duration-300 transform hover:scale-105"
-          >
-            <Users className="w-5 h-5 inline mr-2" />
-            探索者联盟
-          </button>
+                  <button
+          onClick={() => window.location.href = "/alliance"}
+          className="group px-8 py-4 border-2 border-purple-400 rounded-full text-purple-300 font-semibold text-lg hover:bg-purple-400 hover:text-white transition-all duration-300 transform hover:scale-105"
+        >
+          <Users className="w-5 h-5 inline mr-2" />
+          探索者联盟
+        </button>
 
           <button
-            onClick={handlePortalClick}
+            onClick={() => window.location.href = '/portal'}
             className="group px-8 py-4 border-2 border-green-400 rounded-full text-green-300 font-semibold text-lg hover:bg-green-400 hover:text-white transition-all duration-300 transform hover:scale-105"
           >
             <TreePine className="w-5 h-5 inline mr-2" />
@@ -198,6 +170,20 @@ export default function Home() {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Floating Gaia chat button */}
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.5, delay: 2 }}
+        onClick={() => setShowGaiaDialog(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 z-50"
+      >
+        <MessageCircle className="w-8 h-8 text-white" />
+      </motion.button>
+
+      {/* Gaia Dialog */}
+      <GaiaDialog isOpen={showGaiaDialog} onClose={() => setShowGaiaDialog(false)} />
     </div>
   )
 }
