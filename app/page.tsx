@@ -130,7 +130,7 @@ export default function Home() {
           </button>
 
                   <button
-          onClick={() => window.location.href = "/alliance"}
+          onClick={() => window.location.href = "/pbl"}
           className="group px-8 py-4 border-2 border-purple-400 rounded-full text-purple-300 font-semibold text-lg hover:bg-purple-400 hover:text-white transition-all duration-300 transform hover:scale-105"
         >
           <Users className="w-5 h-5 inline mr-2" />
