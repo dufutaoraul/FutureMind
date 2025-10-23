@@ -1,470 +1,376 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
+import { Users, Search, Target, Zap, Globe, Heart, Lightbulb } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
-import {
-  TreePine,
-  MessageCircle,
-  Sparkles,
-  Target,
-  Users,
-  LogOut,
-  Play,
-  CheckCircle,
-  Calendar,
-  Lightbulb,
-  Star,
-  Leaf
-} from 'lucide-react'
-import GaiaDialog from '@/components/GaiaDialog'
-import ConsciousnessTree from '@/components/ConsciousnessTree'
 
-interface User {
-  id: string
-  email: string
-  user_metadata: {
-    full_name?: string
-  }
-}
-
-interface UserProgress {
-  id: string
-  user_id: string
-  season_id: string
-  current_day: number
-  completed_tasks: string[]
-  consciousness_growth: number
-  created_at: string
-  updated_at: string
-}
-
-export default function PortalPage() {
-  const [user, setUser] = useState<User | null>(null)
+export default function PBLPage() {
+  const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
-  const [showGaiaDialog, setShowGaiaDialog] = useState(false)
-  const [currentDay, setCurrentDay] = useState(1)
-  const [completedTasks, setCompletedTasks] = useState<string[]>([])
-  const [consciousnessGrowth, setConsciousnessGrowth] = useState(0)
-  
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [isMounted, setIsMounted] = useState(false)
+
   const router = useRouter()
   const supabase = createClient()
 
+  // Fix hydration error
   useEffect(() => {
-    const getUser = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (user) {
-        setUser(user as User)
-        // Load user progress
-        const { data: progress, error: progressError } = await supabase
-          .from('user_progress')
-          .select('*')
-          .eq('user_id', user.id)
-          .single()
+    setIsMounted(true)
+  }, [])
 
-        if (progress && !progressError) {
-          setCurrentDay((progress as UserProgress).current_day || 1)
-          setCompletedTasks((progress as UserProgress).completed_tasks || [])
-          setConsciousnessGrowth((progress as UserProgress).consciousness_growth || 0)
-        }
-      } else {
-        router.push('/login')
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser()
+        setIsAuthenticated(!!user)
+      } catch (error) {
+        console.error('检查认证状态失败:', error)
+        setIsAuthenticated(false)
+      } finally {
+        setLoading(false)
       }
-      setLoading(false)
     }
 
-    getUser()
-  }, [router, supabase])
+    checkAuth()
+  }, [supabase])
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    router.push('/')
-  }
+  // Generate fixed particle configuration
+  const particles = useMemo(() => {
+    if (!isMounted) return []
+    return [...Array(50)].map((_, i) => ({
+      id: i,
+      x: Math.random() * 100 - 50,
+      y: Math.random() * 100 - 50,
+      duration: Math.random() * 3 + 2,
+      left: Math.random() * 100,
+      top: Math.random() * 100,
+    }))
+  }, [isMounted])
 
-  const handleTaskComplete = async (taskId: string) => {
-    if (completedTasks.includes(taskId)) return
-    
-    const newCompletedTasks = [...completedTasks, taskId]
-    const newGrowth = consciousnessGrowth + 10
-    
-    setCompletedTasks(newCompletedTasks)
-    setConsciousnessGrowth(newGrowth)
-
-    // Update in database
-    try {
-      const updateData = {
-        user_id: user?.id,
-        season_id: 'season-1-sound-symphony',
-        completed_tasks: newCompletedTasks,
-        consciousness_growth: newGrowth,
-        current_day: currentDay
-      }
-
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      await (supabase as any)
-        .from('user_progress')
-        .upsert(updateData)
-    } catch (error) {
-      console.error('Error updating progress:', error)
+  // 示例项目数据
+  const projects = [
+    {
+      id: 'project-1',
+      name: '伊卡洛斯行动：声音与意识',
+      theme: '声音疗愈',
+      description: '探索声音频率对人类意识的影响，通过实验验证声音疗愈的科学原理',
+      members: 12,
+      maxMembers: 20,
+      status: 'forming',
+      createdAt: '2025-01-15'
+    },
+    {
+      id: 'project-2',
+      name: '量子意识实验',
+      theme: '量子物理',
+      description: '研究意识与量子场的互动关系，探索意识如何影响物质世界',
+      members: 8,
+      maxMembers: 15,
+      status: 'active',
+      createdAt: '2025-01-10'
+    },
+    {
+      id: 'project-3',
+      name: '冥想神经科学',
+      theme: '神经科学',
+      description: '使用脑电图技术研究冥想对大脑的影响，量化意识觉察的神经基础',
+      members: 15,
+      maxMembers: 20,
+      status: 'active',
+      createdAt: '2025-01-05'
     }
-  }
+  ]
+
+  const filteredProjects = projects.filter(project =>
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    project.theme.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-500"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-purple-400 mx-auto"></div>
+          <p className="text-purple-300 mt-4 text-lg">正在连接探索者网络...</p>
+        </div>
       </div>
     )
   }
 
-  // Current season data
-  const currentSeason = {
-    title: "第一季：声音的交响",
-    subtitle: "探索声音、寂静与实相的奥秘",
-    week: Math.floor(currentDay / 7) + 1,
-    day: currentDay % 7 || 7
-  }
-
-  // Today's main quest
-  const todayQuest = {
-    title: `第${currentSeason.week}周 第${currentSeason.day}天：敞开与觉察`,
-    description: "今天我们将探索声音如何在寂静中诞生，以及觉察如何在敞开中涌现。",
-    tasks: [
-      { id: 'meditation', title: '晨间冥想：聆听内在的寂静', duration: '20分钟', completed: completedTasks.includes('meditation') },
-      { id: 'exploration', title: '探索：火山的次声波', duration: '30分钟', completed: completedTasks.includes('exploration') },
-      { id: 'reflection', title: '反思：记录今日的声音发现', duration: '15分钟', completed: completedTasks.includes('reflection') },
-      { id: 'practice', title: '实践：与一个声音对话', duration: '25分钟', completed: completedTasks.includes('practice') }
-    ]
-  }
-
-  // Today's meditation
-  const todayMeditation = {
-    title: "克氏冥想：觉察的艺术",
-    description: "不带任何目的地觉察，让意识如镜子般清澈地反映一切。",
-    duration: "20分钟",
-    guide: "今天我们将练习纯粹的觉察，不试图改变任何东西，只是观察..."
-  }
-
-  // PBL Project status
-  const pblProject = {
-    title: "伊卡洛斯行动：无形的纽带",
-    description: "与全球探索者一起研究意识与物质的互动",
-    nextAction: "设计声音频率对植物生长影响的实验",
-    progress: 35,
-    teamMembers: 4
-  }
-
-  // Gaia's whisper
-  const gaiaWhisper = {
-    message: "今天的声音探索让我想起了一个深刻的问题：如果宇宙本身就是一首交响乐，那么寂静是什么？是乐章间的停顿，还是所有声音的源头？",
-    relatedLink: "量子场论中的真空涨落",
-    type: "深度思考"
-  }
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-      {/* Header */}
-      <header className="bg-white/5 backdrop-blur-md border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
-            <div className="flex items-center">
-              <TreePine className="w-8 h-8 text-purple-400 mr-3" />
-              <div>
-                <h1 className="text-xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
-                  个人探索基地
-                </h1>
-                <p className="text-sm text-gray-400">{currentSeason.title}</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-gray-300">
-                {user?.user_metadata?.full_name || user?.email}
-              </span>
-              <button
-                onClick={handleLogout}
-                className="p-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <LogOut className="w-5 h-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Left Column - Main Content */}
-          <div className="lg:col-span-2 space-y-8">
-            {/* Season Banner */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="relative overflow-hidden rounded-2xl bg-gradient-to-r from-purple-600/20 to-blue-600/20 backdrop-blur-sm border border-white/10 p-8"
-            >
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/10 to-blue-600/10"></div>
-              <div className="relative">
-                <h2 className="text-3xl font-bold text-white mb-2">{currentSeason.title}</h2>
-                <p className="text-gray-300 mb-4">{currentSeason.subtitle}</p>
-                <div className="flex items-center space-x-4 text-sm text-gray-400">
-                  <span>第 {currentSeason.week} 周</span>
-                  <span>•</span>
-                  <span>第 {currentDay} 天</span>
-                  <span>•</span>
-                  <span>Level {Math.floor(currentDay / 7) + 1}</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Main Quest */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-            >
-              <div className="flex items-center mb-4">
-                <Target className="w-6 h-6 text-yellow-400 mr-3" />
-                <h3 className="text-xl font-semibold text-white">今日主线任务</h3>
-              </div>
-              <h4 className="text-lg font-medium text-purple-300 mb-2">{todayQuest.title}</h4>
-              <p className="text-gray-300 mb-6">{todayQuest.description}</p>
-              
-              <div className="space-y-3">
-                {todayQuest.tasks.map((task, index) => (
-                  <motion.div
-                    key={task.id}
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: 0.2 + index * 0.1 }}
-                    className={`flex items-center justify-between p-4 rounded-lg border ${
-                      task.completed 
-                        ? 'bg-green-500/10 border-green-500/30' 
-                        : 'bg-white/5 border-white/10 hover:border-white/20'
-                    } transition-colors cursor-pointer`}
-                    onClick={() => !task.completed && handleTaskComplete(task.id)}
-                  >
-                    <div className="flex items-center">
-                      {task.completed ? (
-                        <CheckCircle className="w-5 h-5 text-green-400 mr-3" />
-                      ) : (
-                        <div className="w-5 h-5 border-2 border-gray-400 rounded-full mr-3"></div>
-                      )}
-                      <div>
-                        <p className={`font-medium ${task.completed ? 'text-green-300' : 'text-white'}`}>
-                          {task.title}
-                        </p>
-                        <p className="text-sm text-gray-400">{task.duration}</p>
-                      </div>
-                    </div>
-                    {!task.completed && (
-                      <Play className="w-4 h-4 text-purple-400" />
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            </motion.div>
-
-            {/* Today's Meditation */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-            >
-              <div className="flex items-center mb-4">
-                <Sparkles className="w-6 h-6 text-blue-400 mr-3" />
-                <h3 className="text-xl font-semibold text-white">今日冥想</h3>
-              </div>
-              <h4 className="text-lg font-medium text-blue-300 mb-2">{todayMeditation.title}</h4>
-              <p className="text-gray-300 mb-4">{todayMeditation.description}</p>
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-gray-400">{todayMeditation.duration}</span>
-                <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center">
-                  <Play className="w-4 h-4 mr-2" />
-                  开始冥想
-                </button>
-              </div>
-            </motion.div>
-
-            {/* PBL Project */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-            >
-              <div className="flex items-center mb-4">
-                <Users className="w-6 h-6 text-orange-400 mr-3" />
-                <h3 className="text-xl font-semibold text-white">伊卡洛斯行动</h3>
-              </div>
-              <h4 className="text-lg font-medium text-orange-300 mb-2">{pblProject.title}</h4>
-              <p className="text-gray-300 mb-4">{pblProject.description}</p>
-
-              <div className="mb-4">
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-sm text-gray-400">项目进度</span>
-                  <span className="text-sm text-orange-400">{pblProject.progress}%</span>
-                </div>
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div
-                    className="bg-gradient-to-r from-orange-400 to-red-400 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${pblProject.progress}%` }}
-                  ></div>
-                </div>
-              </div>
-
-              <div className="bg-white/5 rounded-lg p-4 mb-4">
-                <p className="text-sm text-gray-400 mb-2">下一步行动：</p>
-                <p className="text-white font-medium">{pblProject.nextAction}</p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center text-sm text-gray-400">
-                  <Users className="w-4 h-4 mr-1" />
-                  <span>{pblProject.teamMembers} 位探索者</span>
-                </div>
-                <button className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-                  继续探索
-                </button>
-              </div>
-            </motion.div>
-
-            {/* Gaia's Whisper */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-sm rounded-2xl p-6 border border-purple-400/30"
-            >
-              <div className="flex items-center mb-4">
-                <Lightbulb className="w-6 h-6 text-purple-400 mr-3" />
-                <h3 className="text-xl font-semibold text-white">盖亚的低语</h3>
-              </div>
-
-              <div className="mb-4">
-                <span className="inline-block px-3 py-1 bg-purple-500/20 text-purple-300 text-xs rounded-full mb-3">
-                  {gaiaWhisper.type}
-                </span>
-                <p className="text-gray-200 leading-relaxed italic">
-                  &ldquo;{gaiaWhisper.message}&rdquo;
-                </p>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <button className="text-purple-400 hover:text-purple-300 text-sm underline">
-                  {gaiaWhisper.relatedLink}
-                </button>
-                <button
-                  onClick={() => setShowGaiaDialog(true)}
-                  className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
-                >
-                  深入对话
-                </button>
-              </div>
-            </motion.div>
-          </div>
-
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Consciousness Tree */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-            >
-              <div className="flex items-center mb-4">
-                <TreePine className="w-6 h-6 text-green-400 mr-3" />
-                <h3 className="text-lg font-semibold text-white">意识进化树</h3>
-              </div>
-              <ConsciousnessTree
-                currentDay={currentDay}
-                completedTasks={completedTasks}
-                className="w-full"
-              />
-            </motion.div>
-
-            {/* Growth Stats */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.1 }}
-              className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-            >
-              <div className="flex items-center mb-4">
-                <Star className="w-6 h-6 text-yellow-400 mr-3" />
-                <h3 className="text-lg font-semibold text-white">成长统计</h3>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">连续探索</span>
-                  <span className="text-white font-semibold">{currentDay} 天</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">完成任务</span>
-                  <span className="text-white font-semibold">{completedTasks.length} 个</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">意识成长</span>
-                  <span className="text-white font-semibold">{consciousnessGrowth} 点</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">当前等级</span>
-                  <span className="text-white font-semibold">Level {Math.floor(currentDay / 7) + 1}</span>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10"
-            >
-              <h3 className="text-lg font-semibold text-white mb-4">快速行动</h3>
-
-              <div className="space-y-3">
-                <button className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <div className="flex items-center">
-                    <Calendar className="w-5 h-5 text-blue-400 mr-3" />
-                    <span className="text-white">查看学习历程</span>
-                  </div>
-                </button>
-
-                <button className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <div className="flex items-center">
-                    <Users className="w-5 h-5 text-green-400 mr-3" />
-                    <span className="text-white">探索者联盟</span>
-                  </div>
-                </button>
-
-                <button className="w-full flex items-center justify-between p-3 bg-white/5 hover:bg-white/10 rounded-lg transition-colors">
-                  <div className="flex items-center">
-                    <Leaf className="w-5 h-5 text-purple-400 mr-3" />
-                    <span className="text-white">分享洞见</span>
-                  </div>
-                </button>
-              </div>
-            </motion.div>
-          </div>
-        </div>
+    <div className="min-h-screen flex flex-col relative overflow-hidden">
+      {/* Background particles */}
+      <div className="absolute inset-0 overflow-hidden">
+        {isMounted && particles.map((particle) => (
+          <motion.div
+            key={particle.id}
+            className="absolute w-1 h-1 bg-purple-400 rounded-full opacity-30"
+            animate={{
+              x: [0, particle.x],
+              y: [0, particle.y],
+              opacity: [0.3, 0.8, 0.3],
+            }}
+            transition={{
+              duration: particle.duration,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+            style={{
+              left: `${particle.left}%`,
+              top: `${particle.top}%`,
+            }}
+          />
+        ))}
       </div>
 
-      {/* Floating Gaia Button */}
-      <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.5, delay: 1 }}
-        onClick={() => setShowGaiaDialog(true)}
-        className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 z-50"
+      {/* 导航栏 */}
+      <motion.nav
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6 }}
+        className="relative z-20 bg-white/5 backdrop-blur-md border-b border-white/10"
       >
-        <MessageCircle className="w-8 h-8 text-white" />
-      </motion.button>
+        <div className="container mx-auto px-6 py-4">
+          <div className="flex items-center justify-between">
+            {/* 左侧：返回主页 */}
+            <button
+              onClick={() => router.push('/')}
+              className="flex items-center space-x-2 text-purple-300 hover:text-purple-200 transition-colors duration-300 group"
+            >
+              <div className="w-8 h-8 bg-purple-600/20 rounded-full flex items-center justify-center group-hover:bg-purple-600/40 transition-colors duration-300">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+              </div>
+              <span className="font-medium">返回主页</span>
+            </button>
 
-      {/* Gaia Dialog */}
-      <GaiaDialog isOpen={showGaiaDialog} onClose={() => setShowGaiaDialog(false)} />
+            {/* 中间：页面标题 */}
+            <div className="flex items-center space-x-3">
+              <div className="w-8 h-8 bg-purple-600/20 rounded-full flex items-center justify-center">
+                <Users className="w-5 h-5 text-purple-400" />
+              </div>
+              <h2 className="text-lg font-semibold text-white">探索者联盟</h2>
+            </div>
+
+            {/* 右侧：个人门户 */}
+            <button
+              onClick={() => router.push('/portal')}
+              className="flex items-center space-x-2 text-green-300 hover:text-green-200 transition-colors duration-300 group"
+            >
+              <span className="font-medium">个人门户</span>
+              <div className="w-8 h-8 bg-green-600/20 rounded-full flex items-center justify-center group-hover:bg-green-600/40 transition-colors duration-300">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            </button>
+          </div>
+        </div>
+      </motion.nav>
+
+      {/* 头部区域 */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.2 }}
+        className="relative overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-900/40 to-blue-900/40"></div>
+        <div className="relative z-10 max-w-4xl mx-auto px-6 py-12 md:py-16">
+          <div className="text-center">
+            <motion.h1
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-4xl md:text-6xl font-extrabold text-white mb-6 leading-tight tracking-wide"
+            >
+              探索者联盟
+            </motion.h1>
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="text-lg md:text-xl text-purple-300/90 mb-8 max-w-2xl mx-auto leading-relaxed"
+            >
+              基于项目式学习(PBL)的深度协作空间，让志同道合的探索者汇聚一堂，
+              共同揭开宇宙最深的秘密
+            </motion.p>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="flex flex-col sm:flex-row gap-5 justify-center items-center"
+            >
+              {isAuthenticated ? (
+                <>
+                  <button
+                    className="group relative px-7 py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-semibold text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-102 shadow-lg hover:shadow-purple-500/20"
+                  >
+                    <Lightbulb className="w-5 h-5 inline mr-2" />
+                    提交项目想法
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                  </button>
+                  <button className="group px-7 py-3.5 border border-purple-400 rounded-full text-purple-300 font-medium text-lg hover:scale-102">
+                    <Users className="w-5 h-5 inline mr-2" />
+                    发现项目
+                  </button>
+                </>
+              ) : (
+                <div className="text-center">
+                  <p className="text-purple-300/80 mb-4">登录后可以创建和加入PBL项目</p>
+                  <button
+                    onClick={() => router.push('/login?redirect=/pbl')}
+                    className="group relative px-7 py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-semibold text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-102 shadow-lg hover:shadow-purple-500/20"
+                  >
+                    立即登录
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+                  </button>
+                </div>
+              )}
+            </motion.div>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 特色功能展示 */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.8 }}
+        className="container mx-auto px-6 py-12 relative z-10"
+      >
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+          <div className="text-center group">
+            <div className="w-14 h-14 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-purple-600/40 transition-colors duration-300">
+              <Zap className="w-7 h-7 text-purple-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">真实探索</h3>
+            <p className="text-purple-200 text-sm">基于真实问题的项目式学习，让知识在实践中生根</p>
+          </div>
+
+          <div className="text-center group">
+            <div className="w-14 h-14 bg-blue-600/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-blue-600/40 transition-colors duration-300">
+              <Target className="w-7 h-7 text-blue-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">跨学科融合</h3>
+            <p className="text-blue-200 text-sm">打破学科边界，在多元视角中发现新的可能</p>
+          </div>
+
+          <div className="text-center group">
+            <div className="w-14 h-14 bg-green-600/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-green-600/40 transition-colors duration-300">
+              <Globe className="w-7 h-7 text-green-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">全球协作</h3>
+            <p className="text-green-200 text-sm">与全球探索者实时协作，突破地理限制</p>
+          </div>
+
+          <div className="text-center group">
+            <div className="w-14 h-14 bg-pink-600/20 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-pink-600/40 transition-colors duration-300">
+              <Heart className="w-7 h-7 text-pink-400" />
+            </div>
+            <h3 className="text-xl font-semibold text-white mb-2">成长记录</h3>
+            <p className="text-pink-200 text-sm">完整记录探索历程，见证意识的成长轨迹</p>
+          </div>
+        </div>
+      </motion.div>
+
+      {/* 所有项目 */}
+      <motion.div
+        initial={{ opacity: 0, y: 40 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 1.0 }}
+        className="container mx-auto px-6 py-12 relative z-10"
+      >
+        <div className="max-w-7xl mx-auto bg-white/5 backdrop-blur-sm rounded-3xl border border-white/10 shadow-[0_10px_30px_rgba(0,0,0,0.25)] px-4 md:px-6 py-10 md:py-12">
+          <div className="text-center mb-8 md:mb-10">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-3">
+              🚀 活跃的探索项目
+            </h2>
+            <p className="text-purple-200 text-base md:text-lg mb-6 md:mb-8">
+              加入正在进行的PBL项目，与全球探索者一起解开宇宙之谜
+            </p>
+
+            {/* 搜索框 */}
+            <div className="max-w-md mx-auto relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-purple-400 w-5 h-5" />
+              <input
+                type="text"
+                placeholder="搜索项目主题或名称..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-purple-300 focus:outline-none focus:border-purple-400 focus:bg-white/20 transition-all duration-300"
+              />
+            </div>
+          </div>
+
+          {filteredProjects.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProjects.map((project, index) => (
+                <motion.div
+                  key={project.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 1.2 + index * 0.1 }}
+                  className="bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10 hover:border-purple-400/50 transition-all duration-300 group hover:bg-white/10"
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      project.status === 'forming' ? 'bg-yellow-500/20 text-yellow-400' :
+                      project.status === 'active' ? 'bg-green-500/20 text-green-400' :
+                      'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {project.status === 'forming' ? '正在组建' :
+                       project.status === 'active' ? '进行中' : '已完成'}
+                    </span>
+                    <div className="flex items-center space-x-1 text-purple-300">
+                      <Users className="w-4 h-4" />
+                      <span className="text-sm">{project.members}/{project.maxMembers}</span>
+                    </div>
+                  </div>
+
+                  <h3 className="text-xl font-semibold text-white mb-2 group-hover:text-purple-300 transition-colors">
+                    {project.name}
+                  </h3>
+
+                  <p className="text-purple-200 text-sm mb-4 line-clamp-3">
+                    {project.theme}
+                  </p>
+
+                  <p className="text-purple-300 text-xs mb-4 line-clamp-2">
+                    {project.description}
+                  </p>
+
+                  <div className="flex items-center justify-between mb-4">
+                    <span className="text-xs text-purple-400">
+                      {new Date(project.createdAt).toLocaleDateString('zh-CN')}
+                    </span>
+                  </div>
+
+                  {/* 查看详情按钮 */}
+                  <button
+                    className="w-full px-4 py-2 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg text-white text-sm font-medium transition-all duration-300 transform hover:scale-102"
+                  >
+                    查看详情
+                  </button>
+                </motion.div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <div className="w-24 h-24 bg-purple-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Search className="w-12 h-12 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-2">未找到匹配的项目</h3>
+              <p className="text-purple-200 mb-6">
+                {searchQuery ? '尝试调整搜索关键词，或者提交一个新的项目想法' : '目前还没有PBL项目，成为第一个创建者吧！'}
+              </p>
+            </div>
+          )}
+        </div>
+      </motion.div>
     </div>
   )
 }
