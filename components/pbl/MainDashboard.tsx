@@ -1,0 +1,231 @@
+"use client"
+
+import React, { useState } from 'react'
+import { ProjectExplorer } from './ProjectExplorer'
+import { FloatingGaia } from './FloatingGaia'
+import { PBLProject, pblDataService } from '@/lib/pbl-data'
+import {
+  Compass,
+  BookOpen,
+  Users,
+  Sparkles,
+  LogOut,
+  User,
+  Zap
+} from 'lucide-react'
+
+type ViewType = 'explore' | 'my-projects' | 'community' | 'demo' | 'profile'
+
+export function MainDashboard() {
+  const [currentView, setCurrentView] = useState<ViewType>('explore')
+  const [currentProject, setCurrentProject] = useState<PBLProject | null>(null)
+
+  // 模拟用户数据
+  const user = {
+    name: '匿名探索者',
+    email: 'guest@pbl.local',
+    consciousness_level: 0
+  }
+  const isGuest = true
+
+  const handleProjectSelect = async (projectId: string) => {
+    try {
+      const project = await pblDataService.getProjectById(projectId)
+      setCurrentProject(project)
+      console.log('选中项目:', project)
+    } catch (error) {
+      console.error('加载项目详情失败:', error)
+    }
+  }
+
+  const handleSignOut = () => {
+    console.log('退出登录')
+    // 这里可以添加实际的登出逻辑
+  }
+
+  const renderContent = () => {
+    switch (currentView) {
+      case 'explore':
+        return <ProjectExplorer onProjectSelect={handleProjectSelect} />
+      case 'my-projects':
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <BookOpen className="w-16 h-16 text-cosmic-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">我的项目</h3>
+              <p className="text-cosmic-400">功能开发中...</p>
+            </div>
+          </div>
+        )
+      case 'community':
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <Users className="w-16 h-16 text-cosmic-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">社区</h3>
+              <p className="text-cosmic-400">功能开发中...</p>
+            </div>
+          </div>
+        )
+      case 'demo':
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <Zap className="w-16 h-16 text-cosmic-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">功能演示</h3>
+              <p className="text-cosmic-400">功能开发中...</p>
+            </div>
+          </div>
+        )
+      case 'profile':
+        return (
+          <div className="flex items-center justify-center h-full">
+            <div className="text-center">
+              <User className="w-16 h-16 text-cosmic-500 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold text-white mb-2">个人资料</h3>
+              <p className="text-cosmic-400">功能开发中...</p>
+            </div>
+          </div>
+        )
+      default:
+        return <ProjectExplorer onProjectSelect={handleProjectSelect} />
+    }
+  }
+
+  return (
+    <div className="min-h-screen flex bg-cosmic-900">
+      {/* 侧边栏 */}
+      <div className="w-64 bg-cosmic-800/50 backdrop-blur-sm border-r border-cosmic-700">
+        <div className="p-6">
+          {/* Logo */}
+          <div className="flex items-center mb-8">
+            <div className="w-10 h-10 bg-gradient-cosmic rounded-full flex items-center justify-center mr-3">
+              <Sparkles className="w-5 h-5 text-white" />
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-white font-cosmic">探索者联盟</h1>
+              <p className="text-xs text-cosmic-400">PBL学习平台</p>
+            </div>
+          </div>
+
+          {/* 用户信息 */}
+          <div className="mb-8 p-4 bg-cosmic-700/30 rounded-lg">
+            <div className="flex items-center">
+              <div className="w-10 h-10 bg-gradient-cosmic rounded-full flex items-center justify-center mr-3">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-white truncate">
+                  {user?.name || '探索者'}
+                </p>
+                <p className="text-xs text-cosmic-400 truncate">
+                  {isGuest ? '游客模式' : user?.email}
+                </p>
+              </div>
+            </div>
+            {user?.consciousness_level !== undefined && (
+              <div className="mt-3">
+                <div className="flex items-center justify-between text-xs text-cosmic-400 mb-1">
+                  <span>意识等级</span>
+                  <span>Lv.{user.consciousness_level}</span>
+                </div>
+                <div className="w-full bg-cosmic-800 rounded-full h-2">
+                  <div
+                    className="bg-gradient-cosmic h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min(user.consciousness_level * 20, 100)}%` }}
+                  ></div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 导航菜单 */}
+          <nav className="space-y-2">
+            <button
+              onClick={() => setCurrentView('explore')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
+                currentView === 'explore'
+                  ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
+                  : 'text-cosmic-300 hover:bg-cosmic-700/50 hover:text-white'
+              }`}
+            >
+              <Compass className="w-5 h-5 mr-3" />
+              探索项目
+            </button>
+
+            <button
+              onClick={() => setCurrentView('my-projects')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
+                currentView === 'my-projects'
+                  ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
+                  : 'text-cosmic-300 hover:bg-cosmic-700/50 hover:text-white'
+              }`}
+            >
+              <BookOpen className="w-5 h-5 mr-3" />
+              我的项目
+            </button>
+
+            <button
+              onClick={() => setCurrentView('community')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
+                currentView === 'community'
+                  ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
+                  : 'text-cosmic-300 hover:bg-cosmic-700/50 hover:text-white'
+              }`}
+            >
+              <Users className="w-5 h-5 mr-3" />
+              社区
+            </button>
+
+            <button
+              onClick={() => setCurrentView('demo')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
+                currentView === 'demo'
+                  ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
+                  : 'text-cosmic-300 hover:bg-cosmic-700/50 hover:text-white'
+              }`}
+            >
+              <Zap className="w-5 h-5 mr-3" />
+              功能演示
+            </button>
+
+            <button
+              onClick={() => setCurrentView('profile')}
+              className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
+                currentView === 'profile'
+                  ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
+                  : 'text-cosmic-300 hover:bg-cosmic-700/50 hover:text-white'
+              }`}
+            >
+              <User className="w-5 h-5 mr-3" />
+              个人资料
+            </button>
+          </nav>
+
+          {/* 登出按钮 */}
+          <div className="mt-8 pt-4 border-t border-cosmic-700">
+            <button
+              onClick={handleSignOut}
+              className="w-full flex items-center px-4 py-3 rounded-lg text-left text-red-400 hover:bg-red-900/20 hover:text-red-300 transition-colors"
+            >
+              <LogOut className="w-5 h-5 mr-3" />
+              {isGuest ? '退出游客模式' : '退出登录'}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 主内容区 */}
+      <div className="flex-1 overflow-hidden">
+        {renderContent()}
+      </div>
+
+      {/* 塞娅AI助手 */}
+      <FloatingGaia
+        currentProject={currentProject || undefined}
+        showProjectSelector={false}
+        userName={user?.name}
+      />
+    </div>
+  )
+}
