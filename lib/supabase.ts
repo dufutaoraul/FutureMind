@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
+export type Json = string | number | boolean | null | { [key: string]: Json } | Json[]
+
 export type Database = {
   public: {
     Tables: {
@@ -10,6 +12,7 @@ export type Database = {
           full_name: string | null
           avatar_url: string | null
           consciousness_level: number
+          role: 'user' | 'content_viewer' | 'content_editor' | 'content_admin' | null
           created_at: string
           updated_at: string
         }
@@ -19,6 +22,7 @@ export type Database = {
           full_name?: string | null
           avatar_url?: string | null
           consciousness_level?: number
+          role?: 'user' | 'content_viewer' | 'content_editor' | 'content_admin' | null
           created_at?: string
           updated_at?: string
         }
@@ -28,6 +32,7 @@ export type Database = {
           full_name?: string | null
           avatar_url?: string | null
           consciousness_level?: number
+          role?: 'user' | 'content_viewer' | 'content_editor' | 'content_admin' | null
           created_at?: string
           updated_at?: string
         }
@@ -249,6 +254,146 @@ export type Database = {
           depth_score?: number
           breadth_score?: number
           last_activity?: string
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      content_module: {
+        Row: {
+          id: string
+          key: string
+          title: string
+          description: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          key: string
+          title: string
+          description?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          key?: string
+          title?: string
+          description?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      content_item: {
+        Row: {
+          id: string
+          module_id: string
+          slug: string
+          title: string
+          summary: string | null
+          default_locale: string | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          module_id: string
+          slug: string
+          title: string
+          summary?: string | null
+          default_locale?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          module_id?: string
+          slug?: string
+          title?: string
+          summary?: string | null
+          default_locale?: string | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      video_links: {
+        Row: {
+          id: string
+          title: string
+          url: string
+          platform: 'youtube' | 'bilibili' | 'other'
+          description: string | null
+          module_id: string | null
+          item_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          url: string
+          platform: 'youtube' | 'bilibili' | 'other'
+          description?: string | null
+          module_id?: string | null
+          item_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          url?: string
+          platform?: 'youtube' | 'bilibili' | 'other'
+          description?: string | null
+          module_id?: string | null
+          item_id?: string | null
+          created_at?: string
+        }
+      }
+      media_resources: {
+        Row: {
+          id: string
+          module_id: string | null
+          item_id: string | null
+          resource_type: 'video_link' | 'courseware' | 'link' | 'document'
+          title: string
+          url: string
+          platform: string | null
+          description: string | null
+          meta: Json | null
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          module_id?: string | null
+          item_id?: string | null
+          resource_type: 'video_link' | 'courseware' | 'link' | 'document'
+          title: string
+          url: string
+          platform?: string | null
+          description?: string | null
+          meta?: Json | null
+          created_by?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          module_id?: string | null
+          item_id?: string | null
+          resource_type?: 'video_link' | 'courseware' | 'link' | 'document'
+          title?: string
+          url?: string
+          platform?: string | null
+          description?: string | null
+          meta?: Json | null
+          created_by?: string | null
           created_at?: string
           updated_at?: string
         }

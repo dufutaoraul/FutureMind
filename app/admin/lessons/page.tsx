@@ -233,14 +233,15 @@ export default function FinalPage() {
     }
 
     try {
-      const { data, error } = await supabase
+      const { data, error} = await supabase
         .from('pbl_projects')
         .insert({
           title: newProject.title,
           description: newProject.description,
           max_participants: newProject.max_participants,
-          status: 'active'
-        } as any)
+          status: 'active',
+          season_id: ''
+        })
         .select()
         .single()
 
@@ -272,7 +273,7 @@ export default function FinalPage() {
           description: editingProject.description,
           max_participants: editingProject.max_participants,
           status: editingProject.status
-        } as any)
+        })
         .eq('id', editingProject.id)
         .select()
         .single()
@@ -435,7 +436,7 @@ export default function FinalPage() {
           .update({
             description: '更新后的描述 - ' + new Date().toLocaleString(),
             max_participants: 8
-          } as any)
+          })
           .eq('id', createdProject.id)
           .select()
           .single()
@@ -481,7 +482,7 @@ export default function FinalPage() {
           key: newModule.key.trim(),
           title: newModule.title.trim(),
           description: newModule.description.trim() || null
-        } as any)
+        })
         .select()
         .single()
 
@@ -575,7 +576,7 @@ export default function FinalPage() {
           slug: newItem.slug.trim(),
           title: newItem.title.trim(),
           summary: newItem.summary.trim() || null
-        } as any)
+        })
         .select()
         .single()
 
