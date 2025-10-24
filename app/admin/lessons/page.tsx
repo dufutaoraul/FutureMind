@@ -272,7 +272,7 @@ export default function FinalPage() {
           description: editingProject.description,
           max_participants: editingProject.max_participants,
           status: editingProject.status
-        })
+        } as any)
         .eq('id', editingProject.id)
         .select()
         .single()
@@ -435,7 +435,7 @@ export default function FinalPage() {
           .update({
             description: '更新后的描述 - ' + new Date().toLocaleString(),
             max_participants: 8
-          })
+          } as any)
           .eq('id', createdProject.id)
           .select()
           .single()
