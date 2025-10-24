@@ -24,16 +24,18 @@ export default function Home() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
-      // 如果用户已登录，从profiles表查询is_admin字段
+      // 如果用户已登录，从profiles表查询role字段
       if (user) {
         const { data: profile } = await supabase
           .from('profiles')
-          .select('is_admin')
+          .select('role')
           .eq('id', user.id)
           .single()
 
-        // 检查is_admin字段是否为true
-        if (profile?.is_admin === true) {
+        // 检查role字段是否为content_admin或content_editor
+        // content_admin: 最高管理员权限
+        // content_editor: 内容编辑权限
+        if (profile?.role === 'content_admin' || profile?.role === 'content_editor') {
           setIsAdmin(true)
         }
       }
