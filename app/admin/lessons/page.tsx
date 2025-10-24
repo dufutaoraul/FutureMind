@@ -243,7 +243,7 @@ export default function FinalPage() {
           description: newProject.description,
           max_participants: newProject.max_participants,
           status: 'active',
-          season_id: ''
+          current_participants: 0
         })
         .select()
         .single()

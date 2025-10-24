@@ -228,7 +228,13 @@ export default function Home() {
           </button>
 
           <button
-            onClick={() => window.location.href = '/portal'}
+            onClick={() => {
+              if (!isLoggedIn) {
+                setShowAuthModal(true)
+              } else {
+                window.location.href = '/portal'
+              }
+            }}
             className="group px-8 py-4 border-2 border-green-400 rounded-full text-green-300 font-semibold text-lg hover:bg-green-400 hover:text-white transition-all duration-300 transform hover:scale-105"
           >
             <TreePine className="w-5 h-5 inline mr-2" />
