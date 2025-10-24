@@ -1,9 +1,12 @@
 "use client"
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { ProjectExplorer } from './ProjectExplorer'
-import { FloatingGaia } from './FloatingGaia'
+import { ProjectDetailModal } from './ProjectDetailModal'
+import { GaiaDialog } from '@/components/GaiaDialog'
 import { PBLProject, pblDataService } from '@/lib/pbl-data'
+import { createClient } from '@/lib/supabase/client'
 import {
   Compass,
   BookOpen,
@@ -11,36 +14,84 @@ import {
   Sparkles,
   LogOut,
   User,
-  Zap
+  Zap,
+  Home
 } from 'lucide-react'
 
 type ViewType = 'explore' | 'my-projects' | 'community' | 'demo' | 'profile'
 
 export function MainDashboard() {
   const [currentView, setCurrentView] = useState<ViewType>('explore')
-  const [currentProject, setCurrentProject] = useState<PBLProject | null>(null)
+  const [selectedProject, setSelectedProject] = useState<PBLProject | null>(null)
+  const [showProjectDetail, setShowProjectDetail] = useState(false)
+  const [showGaiaDialog, setShowGaiaDialog] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [isGuest, setIsGuest] = useState(true)
+  const [loading, setLoading] = useState(true)
 
-  // 模拟用户数据
-  const user = {
-    name: '匿名探索者',
-    email: 'guest@pbl.local',
-    consciousness_level: 0
+  // 检查认证状态
+  useEffect(() => {
+    checkAuth()
+  }, [])
+
+  const checkAuth = async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+
+      if (authUser) {
+        setUser({
+          name: authUser.user_metadata?.name || authUser.email?.split('@')[0] || '探索者',
+          email: authUser.email,
+          consciousness_level: authUser.user_metadata?.consciousness_level || 0
+        })
+        setIsGuest(false)
+      } else {
+        setUser({
+          name: '匿名探索者',
+          email: 'guest@pbl.local',
+          consciousness_level: 0
+        })
+        setIsGuest(true)
+      }
+    } catch (error) {
+      console.error('检查认证状态失败:', error)
+      setUser({
+        name: '匿名探索者',
+        email: 'guest@pbl.local',
+        consciousness_level: 0
+      })
+      setIsGuest(true)
+    } finally {
+      setLoading(false)
+    }
   }
-  const isGuest = true
 
   const handleProjectSelect = async (projectId: string) => {
     try {
       const project = await pblDataService.getProjectById(projectId)
-      setCurrentProject(project)
+      setSelectedProject(project)
+      setShowProjectDetail(true)
       console.log('选中项目:', project)
     } catch (error) {
       console.error('加载项目详情失败:', error)
     }
   }
 
-  const handleSignOut = () => {
-    console.log('退出登录')
-    // 这里可以添加实际的登出逻辑
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      window.location.href = '/'
+    } catch (error) {
+      console.error('退出登录失败:', error)
+    }
+  }
+
+  const handleDeleteProject = (project: PBLProject) => {
+    console.log('删除项目:', project)
+    // TODO: 实现实际的删除逻辑
+    setShowProjectDetail(false)
   }
 
   const renderContent = () => {
@@ -92,6 +143,17 @@ export function MainDashboard() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-center">
+          <Sparkles className="w-12 h-12 text-primary-500 animate-pulse mx-auto mb-4" />
+          <p className="text-cosmic-400">加载中...</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex bg-black">
       {/* 侧边栏 */}
@@ -107,6 +169,15 @@ export function MainDashboard() {
               <p className="text-xs text-cosmic-400">PBL学习平台</p>
             </div>
           </div>
+
+          {/* 返回主页按钮 */}
+          <Link
+            href="/"
+            className="w-full flex items-center px-4 py-3 rounded-lg text-cosmic-300 hover:bg-cosmic-700/50 hover:text-white transition-colors mb-6 border border-cosmic-700"
+          >
+            <Home className="w-5 h-5 mr-3" />
+            返回主页
+          </Link>
 
           {/* 用户信息 */}
           <div className="mb-8 p-4 bg-cosmic-700/30 rounded-lg">
@@ -220,11 +291,27 @@ export function MainDashboard() {
         {renderContent()}
       </div>
 
-      {/* 塞娅AI助手 */}
-      <FloatingGaia
-        currentProject={currentProject || undefined}
-        showProjectSelector={false}
-        userName={user?.name}
+      {/* 塞娅AI助手 - 浮动按钮 */}
+      <button
+        onClick={() => setShowGaiaDialog(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-cosmic rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center group z-40 hover:scale-110"
+        aria-label="打开塞娅对话"
+      >
+        <Sparkles className="w-7 h-7 text-white group-hover:rotate-12 transition-transform" />
+      </button>
+
+      {/* 塞娅对话框 */}
+      <GaiaDialog
+        isOpen={showGaiaDialog}
+        onClose={() => setShowGaiaDialog(false)}
+      />
+
+      {/* 项目详情模态框 */}
+      <ProjectDetailModal
+        isOpen={showProjectDetail}
+        onClose={() => setShowProjectDetail(false)}
+        project={selectedProject}
+        onDelete={handleDeleteProject}
       />
     </div>
   )
