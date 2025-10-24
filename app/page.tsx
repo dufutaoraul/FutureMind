@@ -2,17 +2,38 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Sparkles, MessageCircle, TreePine, Users } from 'lucide-react'
+import { Sparkles, MessageCircle, TreePine, Users, Shield } from 'lucide-react'
 import GaiaDialog from '@/components/GaiaDialog'
+import { createClient } from '@/lib/supabase/client'
 
 export default function Home() {
   const [showGaiaDialog, setShowGaiaDialog] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   // 确保只在客户端渲染
   useEffect(() => {
     setIsMounted(true)
+    checkAdminStatus()
   }, [])
+
+  // 检查管理员状态
+  const checkAdminStatus = async () => {
+    try {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      // 检查是否为管理员邮箱
+      if (user && user.email === 'admin@futuremind.com') {
+        setIsAdmin(true)
+      }
+    } catch (error) {
+      console.error('检查管理员状态失败:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // 生成固定的粒子配置
   const particles = useMemo(() => {
@@ -129,13 +150,13 @@ export default function Home() {
             <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
           </button>
 
-                  <button
-          onClick={() => window.location.href = "/pbl"}
-          className="group px-8 py-4 border-2 border-purple-400 rounded-full text-purple-300 font-semibold text-lg hover:bg-purple-400 hover:text-white transition-all duration-300 transform hover:scale-105"
-        >
-          <Users className="w-5 h-5 inline mr-2" />
-          探索者联盟
-        </button>
+          <button
+            onClick={() => window.location.href = "/pbl"}
+            className="group px-8 py-4 border-2 border-purple-400 rounded-full text-purple-300 font-semibold text-lg hover:bg-purple-400 hover:text-white transition-all duration-300 transform hover:scale-105"
+          >
+            <Users className="w-5 h-5 inline mr-2" />
+            探索者联盟
+          </button>
 
           <button
             onClick={() => window.location.href = '/portal'}
@@ -144,6 +165,21 @@ export default function Home() {
             <TreePine className="w-5 h-5 inline mr-2" />
             个人门户
           </button>
+
+          {/* 管理员入口 - 仅管理员可见 */}
+          {isAdmin && (
+            <motion.button
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.5 }}
+              onClick={() => window.open('http://localhost:5173', '_blank')}
+              className="group relative px-8 py-4 bg-gradient-to-r from-red-600 to-pink-600 rounded-full text-white font-semibold text-lg hover:from-red-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-red-500/25"
+            >
+              <Shield className="w-5 h-5 inline mr-2" />
+              课程管理中心
+              <div className="absolute inset-0 rounded-full bg-gradient-to-r from-red-600 to-pink-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
+            </motion.button>
+          )}
         </motion.div>
 
         {/* Features preview */}
