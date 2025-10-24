@@ -4,6 +4,9 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ProjectExplorer } from './ProjectExplorer'
 import { ProjectDetailModal } from './ProjectDetailModal'
+import { MyProjectsPage } from './MyProjectsPage'
+import { CommunityPage } from './CommunityPage'
+import { UserProfile } from './UserProfile'
 import GaiaDialog from '@/components/GaiaDialog'
 import { PBLProject, pblDataService } from '@/lib/pbl-data'
 import { createClient } from '@/lib/supabase/client'
@@ -14,11 +17,10 @@ import {
   Sparkles,
   LogOut,
   User,
-  Zap,
   Home
 } from 'lucide-react'
 
-type ViewType = 'explore' | 'my-projects' | 'community' | 'demo' | 'profile'
+type ViewType = 'explore' | 'my-projects' | 'community' | 'profile'
 
 export function MainDashboard() {
   const [currentView, setCurrentView] = useState<ViewType>('explore')
@@ -100,44 +102,16 @@ export function MainDashboard() {
         return <ProjectExplorer onProjectSelect={handleProjectSelect} />
       case 'my-projects':
         return (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <BookOpen className="w-16 h-16 text-cosmic-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">我的项目</h3>
-              <p className="text-cosmic-400">功能开发中...</p>
-            </div>
-          </div>
+          <MyProjectsPage
+            user={user}
+            isGuest={isGuest}
+            onProjectSelect={handleProjectSelect}
+          />
         )
       case 'community':
-        return (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <Users className="w-16 h-16 text-cosmic-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">社区</h3>
-              <p className="text-cosmic-400">功能开发中...</p>
-            </div>
-          </div>
-        )
-      case 'demo':
-        return (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <Zap className="w-16 h-16 text-cosmic-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">功能演示</h3>
-              <p className="text-cosmic-400">功能开发中...</p>
-            </div>
-          </div>
-        )
+        return <CommunityPage isGuest={isGuest} />
       case 'profile':
-        return (
-          <div className="flex items-center justify-center h-full">
-            <div className="text-center">
-              <User className="w-16 h-16 text-cosmic-500 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-white mb-2">个人资料</h3>
-              <p className="text-cosmic-400">功能开发中...</p>
-            </div>
-          </div>
-        )
+        return <UserProfile user={user} isGuest={isGuest} />
       default:
         return <ProjectExplorer onProjectSelect={handleProjectSelect} />
     }
@@ -246,18 +220,6 @@ export function MainDashboard() {
             >
               <Users className="w-5 h-5 mr-3" />
               社区
-            </button>
-
-            <button
-              onClick={() => setCurrentView('demo')}
-              className={`w-full flex items-center px-4 py-3 rounded-lg text-left transition-colors ${
-                currentView === 'demo'
-                  ? 'bg-primary-600/20 text-primary-300 border border-primary-500/30'
-                  : 'text-cosmic-300 hover:bg-cosmic-700/50 hover:text-white'
-              }`}
-            >
-              <Zap className="w-5 h-5 mr-3" />
-              功能演示
             </button>
 
             <button
