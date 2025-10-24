@@ -35,7 +35,7 @@ export default function Home() {
         // 检查role字段是否为content_admin或content_editor
         // content_admin: 最高管理员权限
         // content_editor: 内容编辑权限
-        const userRole = (profile as { role?: string })?.role
+        const userRole = (profile as unknown as { role?: string })?.role
         if (userRole === 'content_admin' || userRole === 'content_editor') {
           setIsAdmin(true)
         }
