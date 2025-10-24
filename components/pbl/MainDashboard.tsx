@@ -93,7 +93,7 @@ export function MainDashboard() {
   }
 
   return (
-    <div className="min-h-screen flex bg-cosmic-900">
+    <div className="min-h-screen flex bg-black">
       {/* 侧边栏 */}
       <div className="w-64 bg-cosmic-800/50 backdrop-blur-sm border-r border-cosmic-700">
         <div className="p-6">

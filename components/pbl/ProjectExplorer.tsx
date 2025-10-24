@@ -209,7 +209,7 @@ export function ProjectExplorer({ onProjectSelect }: ProjectExplorerProps) {
   }
 
   return (
-    <div className="flex flex-col h-screen bg-cosmic-900">
+    <div className="flex flex-col h-screen bg-black">
       {/* 顶部工具栏 */}
       <div className="bg-cosmic-800/50 backdrop-blur-sm border-b border-cosmic-700 p-6">
         <div className="flex items-center justify-between mb-4">
