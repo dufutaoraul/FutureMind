@@ -24,9 +24,18 @@ export default function Home() {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
-      // 检查是否为管理员邮箱
-      if (user && user.email === 'admin@futuremind.com') {
-        setIsAdmin(true)
+      // 如果用户已登录，从profiles表查询is_admin字段
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('is_admin')
+          .eq('id', user.id)
+          .single()
+
+        // 检查is_admin字段是否为true
+        if (profile?.is_admin === true) {
+          setIsAdmin(true)
+        }
       }
     } catch (error) {
       console.error('检查管理员状态失败:', error)
