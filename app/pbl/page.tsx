@@ -2,9 +2,10 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Search, Target, Zap, Globe, Heart, Lightbulb } from 'lucide-react'
+import { Users, Search, Target, Zap, Globe, Heart, Lightbulb, MessageCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import GaiaDialog from '@/components/GaiaDialog'
 
 interface PBLProject {
   id: string
@@ -26,6 +27,8 @@ export default function PBLPage() {
   const [showProjectModal, setShowProjectModal] = useState(false)
   const [currentUserId, setCurrentUserId] = useState<string | null>(null)
   const [isJoining, setIsJoining] = useState(false)
+  const [showGaiaDialog, setShowGaiaDialog] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
 
   const router = useRouter()
   const supabase = createClient()
@@ -248,13 +251,20 @@ export default function PBLPage() {
               {isAuthenticated ? (
                 <>
                   <button
+                    onClick={() => setShowCreateModal(true)}
                     className="group relative px-7 py-3.5 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-semibold text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-102 shadow-lg hover:shadow-purple-500/20"
                   >
                     <Lightbulb className="w-5 h-5 inline mr-2" />
                     提交项目想法
                     <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-blue-600 opacity-0 group-hover:opacity-20 transition-opacity duration-300" />
                   </button>
-                  <button className="group px-7 py-3.5 border border-purple-400 rounded-full text-purple-300 font-medium text-lg hover:scale-102">
+                  <button
+                    onClick={() => {
+                      const projectsSection = document.getElementById('projects-section')
+                      projectsSection?.scrollIntoView({ behavior: 'smooth' })
+                    }}
+                    className="group px-7 py-3.5 border border-purple-400 rounded-full text-purple-300 font-medium text-lg hover:scale-102"
+                  >
                     <Users className="w-5 h-5 inline mr-2" />
                     发现项目
                   </button>
@@ -320,6 +330,7 @@ export default function PBLPage() {
 
       {/* 所有项目 */}
       <motion.div
+        id="projects-section"
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 1.0 }}
@@ -561,6 +572,70 @@ export default function PBLPage() {
           </motion.div>
         </div>
       )}
+
+      {/* 创建项目模态框 */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowCreateModal(false)}>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-gradient-to-br from-slate-900 to-purple-900 rounded-3xl max-w-md w-full p-8 shadow-2xl border border-purple-500/30"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-2xl font-bold text-white mb-6">✨ 提交项目想法</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-purple-300 mb-2">项目名称</label>
+                <input
+                  type="text"
+                  placeholder="例如：伊卡洛斯行动"
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-purple-300 mb-2">项目描述</label>
+                <textarea
+                  placeholder="描述你的项目想法..."
+                  rows={4}
+                  className="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-purple-400"
+                />
+              </div>
+              <div className="flex gap-4 mt-6">
+                <button
+                  onClick={() => {
+                    alert('项目想法提交功能开发中！请稍后再试。')
+                    setShowCreateModal(false)
+                  }}
+                  className="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 rounded-lg text-white font-semibold transition-all duration-300"
+                >
+                  提交
+                </button>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-6 py-3 border border-gray-500 hover:border-gray-400 rounded-lg text-gray-300 hover:text-white font-semibold transition-all duration-300"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* 盖亚浮动按钮 */}
+      <motion.button
+        initial={{ scale: 0 }}
+        animate={{ scale: 1 }}
+        transition={{ duration: 0.5, delay: 2 }}
+        onClick={() => setShowGaiaDialog(true)}
+        className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 z-50"
+      >
+        <MessageCircle className="w-8 h-8 text-white" />
+      </motion.button>
+
+      {/* Gaia Dialog */}
+      <GaiaDialog isOpen={showGaiaDialog} onClose={() => setShowGaiaDialog(false)} />
     </div>
   )
 }
