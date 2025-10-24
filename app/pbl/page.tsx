@@ -508,7 +508,7 @@ export default function PBLPage() {
                             project_id: selectedProject.id,
                             user_id: currentUserId,
                             role: 'participant'
-                          })
+                          } as any)
 
                         if (error) {
                           if (error.code === '23505') {
