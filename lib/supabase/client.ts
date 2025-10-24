@@ -1,5 +1,5 @@
 import { createBrowserClient } from '@supabase/ssr'
-import { Database } from '../supabase'
+import { Database } from '@/types/database'
 
 // 客户端环境变量验证（仅在运行时）
 function validateClientEnv() {
