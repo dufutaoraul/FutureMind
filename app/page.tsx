@@ -4,12 +4,15 @@ import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Sparkles, MessageCircle, TreePine, Users, Shield } from 'lucide-react'
 import GaiaDialog from '@/components/GaiaDialog'
+import AuthModal from '@/components/AuthModal'
 import { createClient } from '@/lib/supabase/client'
 
 export default function Home() {
   const [showGaiaDialog, setShowGaiaDialog] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
   const [isMounted, setIsMounted] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [loading, setLoading] = useState(true)
 
   // 确保只在客户端渲染
@@ -18,14 +21,17 @@ export default function Home() {
     checkAdminStatus()
   }, [])
 
-  // 检查管理员状态
+  // 检查管理员状态和登录状态
   const checkAdminStatus = async () => {
     try {
       const supabase = createClient()
       const { data: { user } } = await supabase.auth.getUser()
 
-      // 如果用户已登录，从profiles表查询role字段
+      // 如果用户已登录
       if (user) {
+        setIsLoggedIn(true)
+
+        // 从profiles表查询role字段
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -39,11 +45,34 @@ export default function Home() {
         if (userRole === 'content_admin' || userRole === 'content_editor') {
           setIsAdmin(true)
         }
+      } else {
+        setIsLoggedIn(false)
+        setIsAdmin(false)
       }
     } catch (error) {
       console.error('检查管理员状态失败:', error)
+      setIsLoggedIn(false)
+      setIsAdmin(false)
     } finally {
       setLoading(false)
+    }
+  }
+
+  // 处理"与盖亚对话"按钮点击
+  const handleGaiaClick = () => {
+    if (!isLoggedIn) {
+      setShowAuthModal(true)
+    } else {
+      setShowGaiaDialog(true)
+    }
+  }
+
+  // 处理"探索者联盟"按钮点击
+  const handlePBLClick = () => {
+    if (!isLoggedIn) {
+      setShowAuthModal(true)
+    } else {
+      window.location.href = '/pbl'
     }
   }
 
@@ -154,7 +183,7 @@ export default function Home() {
           className="flex flex-col sm:flex-row gap-6 justify-center items-center"
         >
           <button
-            onClick={() => setShowGaiaDialog(true)}
+            onClick={handleGaiaClick}
             className="group relative px-8 py-4 bg-gradient-to-r from-purple-600 to-blue-600 rounded-full text-white font-semibold text-lg hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/25"
           >
             <MessageCircle className="w-5 h-5 inline mr-2" />
@@ -163,7 +192,7 @@ export default function Home() {
           </button>
 
           <button
-            onClick={() => window.location.href = "/pbl"}
+            onClick={handlePBLClick}
             className="group px-8 py-4 border-2 border-purple-400 rounded-full text-purple-300 font-semibold text-lg hover:bg-purple-400 hover:text-white transition-all duration-300 transform hover:scale-105"
           >
             <Users className="w-5 h-5 inline mr-2" />
@@ -184,7 +213,7 @@ export default function Home() {
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5 }}
-              onClick={() => window.open('http://localhost:5173', '_blank')}
+              onClick={() => window.location.href = '/admin/lessons'}
               className="group relative px-8 py-4 bg-gradient-to-r from-red-600 to-pink-600 rounded-full text-white font-semibold text-lg hover:from-red-700 hover:to-pink-700 transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-red-500/25"
             >
               <Shield className="w-5 h-5 inline mr-2" />
@@ -224,7 +253,7 @@ export default function Home() {
         initial={{ scale: 0 }}
         animate={{ scale: 1 }}
         transition={{ duration: 0.5, delay: 2 }}
-        onClick={() => setShowGaiaDialog(true)}
+        onClick={handleGaiaClick}
         className="fixed bottom-8 right-8 w-16 h-16 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center shadow-lg hover:shadow-purple-500/50 transition-all duration-300 hover:scale-110 z-50"
       >
         <MessageCircle className="w-8 h-8 text-white" />
@@ -232,6 +261,9 @@ export default function Home() {
 
       {/* Gaia Dialog */}
       <GaiaDialog isOpen={showGaiaDialog} onClose={() => setShowGaiaDialog(false)} />
+
+      {/* Auth Modal */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </div>
   )
 }
