@@ -240,7 +240,7 @@ export default function FinalPage() {
           description: newProject.description,
           max_participants: newProject.max_participants,
           status: 'active'
-        })
+        } as any)
         .select()
         .single()
 
@@ -481,7 +481,7 @@ export default function FinalPage() {
           key: newModule.key.trim(),
           title: newModule.title.trim(),
           description: newModule.description.trim() || null
-        })
+        } as any)
         .select()
         .single()
 
@@ -575,7 +575,7 @@ export default function FinalPage() {
           slug: newItem.slug.trim(),
           title: newItem.title.trim(),
           summary: newItem.summary.trim() || null
-        })
+        } as any)
         .select()
         .single()
 
