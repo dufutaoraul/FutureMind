@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { ProjectExplorer } from './ProjectExplorer'
 import { ProjectDetailModal } from './ProjectDetailModal'
-import { GaiaDialog } from '@/components/GaiaDialog'
+import GaiaDialog from '@/components/GaiaDialog'
 import { PBLProject, pblDataService } from '@/lib/pbl-data'
 import { createClient } from '@/lib/supabase/client'
 import {
