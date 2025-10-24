@@ -115,6 +115,34 @@ export default function Home() {
         ))}
       </div>
 
+      {/* Header with login/logout button */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8 }}
+        className="absolute top-8 right-8 z-20"
+      >
+        {isLoggedIn ? (
+          <button
+            onClick={async () => {
+              const supabase = createClient()
+              await supabase.auth.signOut()
+              window.location.reload()
+            }}
+            className="px-6 py-2 bg-purple-600/20 border border-purple-400/50 rounded-full text-purple-300 hover:bg-purple-600/40 transition-all duration-300"
+          >
+            退出登录
+          </button>
+        ) : (
+          <button
+            onClick={() => setShowAuthModal(true)}
+            className="px-6 py-2 bg-purple-600/20 border border-purple-400/50 rounded-full text-purple-300 hover:bg-purple-600/40 transition-all duration-300"
+          >
+            登录
+          </button>
+        )}
+      </motion.div>
+
       {/* Main content */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
