@@ -4,7 +4,7 @@ import { createClient as createServerSupabase } from '@/lib/supabase/server'
 export async function POST(req: NextRequest) {
   try {
     const N8N_CHAT_WEBHOOK = process.env.N8N_CHAT_WEBHOOK_URL
-      || 'https://n8n.aifunbox.com/webhook/b568b56a-79f0-47d4-b016-969612e5fa19'
+      || 'https://n8n.aifunbox.com/webhook/79cbcc7c-fcff-4ab4-9a4e-c5a6f14b3024'
 
     // 获取登录用户（失败不阻塞，以便未登录也可体验对话）
     let userId: string | null = null
