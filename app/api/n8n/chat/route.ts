@@ -57,7 +57,15 @@ export async function POST(req: NextRequest) {
       responseData = { reply: text }
     }
 
-    return NextResponse.json(responseData)
+    // 添加调试信息到响应中（临时）
+    return NextResponse.json({
+      ...responseData,
+      _debug: {
+        sentPayload: payload,
+        receivedText: text,
+        receivedParsed: responseData
+      }
+    })
   } catch {
     return NextResponse.json({ error: 'INTERNAL_ERROR' }, { status: 500 })
   }
