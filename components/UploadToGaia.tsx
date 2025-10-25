@@ -10,7 +10,7 @@ type Props = {
 }
 
 export default function UploadToGaia({ isOpen, onClose }: Props) {
-  const [projects, setProjects] = useState<Array<{ id: string; name?: string }>>([])
+  const [projects, setProjects] = useState<Array<{ id: string; title?: string }>>([])
   const [projectId, setProjectId] = useState('')
   const [file, setFile] = useState<File | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -66,7 +66,7 @@ export default function UploadToGaia({ isOpen, onClose }: Props) {
             >
               {projects.map((p) => (
                 <option key={p.id} value={p.id} className="bg-slate-900">
-                  {p.name || p.id}
+                  {p.title || p.id}
                 </option>
               ))}
             </select>

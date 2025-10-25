@@ -395,7 +395,7 @@ class GaiaAPI {
   }
 
   // 获取用户的项目列表
-  async listUserProjects(): Promise<{ success: boolean; data?: { id: string; name?: string }[]; error?: string }> {
+  async listUserProjects(): Promise<{ success: boolean; data?: { id: string; title?: string }[]; error?: string }> {
     try {
       const user = await this.getCurrentUser()
       if (!user) {
