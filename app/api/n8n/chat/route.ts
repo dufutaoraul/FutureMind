@@ -17,11 +17,16 @@ export async function POST(req: NextRequest) {
     const { chatInput, session_id, user_id } = await req.json()
     if (!chatInput) return NextResponse.json({ error: 'CHAT_INPUT_REQUIRED' }, { status: 400 })
 
-    // 发送给 N8N 的 payload，按照要求格式
+    // 发送给 N8N 的 payload，同时包含新旧格式以兼容
     const payload: Record<string, string> = {
+      // 新格式（对话隔离）
       chatInput,
-      session_id: session_id || crypto.randomUUID(), // 如果前端没传，生成一个
+      session_id: session_id || crypto.randomUUID(),
       user_id: user_id || userId || 'guest',
+      // 旧格式（兼容性）
+      message: chatInput,
+      text: chatInput,
+      user_message: chatInput,
     }
     const res = await fetch(N8N_CHAT_WEBHOOK, {
       method: 'POST',
