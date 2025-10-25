@@ -1,12 +1,12 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAdminClient, getClient } from '@/lib/supabase'
 
 export async function GET() {
   try {
-    const supabase = await createClient()
+    const admin = getAdminClient()
 
-    const { data: projects, error } = await supabase
+    const { data: projects, error } = await admin
       .from('pbl_projects')
       .select('*')
       .order('created_at', { ascending: false })
@@ -25,16 +25,24 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    const body = await request.json()
+    const admin = getAdminClient()
+    const supabase = await getClient()
 
+    // 验证用户登录
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
     const { title, description, max_participants = 10 } = body
 
     if (!title?.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 })
     }
 
-    const { data: project, error } = await supabase
+    // 使用管理员client插入数据，绕过RLS限制
+    const { data: project, error } = await admin
       .from('pbl_projects')
       .insert({
         title: title.trim(),

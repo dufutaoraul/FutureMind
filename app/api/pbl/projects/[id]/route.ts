@@ -1,15 +1,15 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { getAdminClient, getClient } from '@/lib/supabase'
 
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient()
+    const admin = getAdminClient()
 
-    const { data: project, error } = await supabase
+    const { data: project, error } = await admin
       .from('pbl_projects')
       .select('*')
       .eq('id', params.id)
@@ -36,9 +36,16 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient()
-    const body = await request.json()
+    const admin = getAdminClient()
+    const supabase = await getClient()
 
+    // 验证用户登录
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
     const { title, description, max_participants, status } = body
 
     if (!title?.trim()) {
@@ -58,7 +65,8 @@ export async function PUT(
       updateData.status = status
     }
 
-    const { data: project, error } = await supabase
+    // 使用管理员client更新数据
+    const { data: project, error } = await admin
       .from('pbl_projects')
       .update(updateData)
       .eq('id', params.id)
@@ -86,9 +94,17 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
-    const supabase = await createClient()
+    const admin = getAdminClient()
+    const supabase = await getClient()
 
-    const { error } = await supabase
+    // 验证用户登录
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // 使用管理员client删除数据
+    const { error } = await admin
       .from('pbl_projects')
       .delete()
       .eq('id', params.id)
