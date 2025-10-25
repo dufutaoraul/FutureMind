@@ -189,16 +189,19 @@ export default function GaiaDialog({ isOpen, onClose }: GaiaDialogProps) {
     setInputValue('')
     setIsTyping(true)
     try {
+      const payload = {
+        chatInput: userMessage.content,
+        session_id: sessionId,
+        user_id: userId,
+        project_id: '937504dc-db0d-498d-a7ce-a817a99d29ea',
+        organization_id: 'd03b6947-f08d-41bd-86c0-c92c3c4630b0'
+      }
+      console.log('🚀 发送到 N8N 的 payload:', JSON.stringify(payload, null, 2))
+
       const res = await fetch('/api/n8n/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chatInput: userMessage.content,
-          session_id: sessionId,
-          user_id: userId,
-          project_id: '937504dc-db0d-498d-a7ce-a817a99d29ea',
-          organization_id: 'd03b6947-f08d-41bd-86c0-c92c3c4630b0'
-        })
+        body: JSON.stringify(payload)
       })
       const data = await res.json().catch(() => ({}))
       
