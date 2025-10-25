@@ -195,7 +195,9 @@ export default function GaiaDialog({ isOpen, onClose }: GaiaDialogProps) {
         body: JSON.stringify({
           chatInput: userMessage.content,
           session_id: sessionId,
-          user_id: userId
+          user_id: userId,
+          project_id: '937504dc-db0d-498d-a7ce-a817a99d29ea',
+          organization_id: 'd03b6947-f08d-41bd-86c0-c92c3c4630b0'
         })
       })
       const data = await res.json().catch(() => ({}))
