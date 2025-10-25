@@ -272,25 +272,29 @@ export default function FinalPage() {
     if (!editingProject) return
 
     try {
-      const { data, error } = await supabase
-        .from('pbl_projects')
-        .update({
+      // 使用API路由更新项目
+      const response = await fetch(`/api/pbl/projects/${editingProject.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           title: editingProject.title,
           description: editingProject.description,
           max_participants: editingProject.max_participants,
           status: editingProject.status
-        })
-        .eq('id', editingProject.id)
-        .select()
-        .single()
+        }),
+      })
 
-      if (error) {
-        console.error('Error updating project:', error)
-        alert('更新项目失败: ' + error.message)
+      const result = await response.json()
+
+      if (!response.ok) {
+        console.error('Error updating project:', result.error)
+        alert('更新项目失败: ' + (result.error || 'Unknown error'))
         return
       }
 
-      setProjects(projects.map(p => p.id === editingProject.id ? data : p))
+      setProjects(projects.map(p => p.id === editingProject.id ? result.project : p))
       setEditingProject(null)
       alert('项目更新成功！')
     } catch (error) {
@@ -306,14 +310,16 @@ export default function FinalPage() {
     }
 
     try {
-      const { error } = await supabase
-        .from('pbl_projects')
-        .delete()
-        .eq('id', projectId)
+      // 使用API路由删除项目
+      const response = await fetch(`/api/pbl/projects/${projectId}`, {
+        method: 'DELETE',
+      })
 
-      if (error) {
-        console.error('Error deleting project:', error)
-        alert('删除项目失败: ' + error.message)
+      const result = await response.json()
+
+      if (!response.ok) {
+        console.error('Error deleting project:', result.error)
+        alert('删除项目失败: ' + (result.error || 'Unknown error'))
         return
       }
 
