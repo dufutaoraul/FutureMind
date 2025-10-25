@@ -236,25 +236,28 @@ export default function FinalPage() {
     }
 
     try {
-      const { data, error} = await supabase
-        .from('pbl_projects')
-        .insert({
-          title: newProject.title,
-          description: newProject.description,
+      // 使用API路由而不是直接操作数据库，以绕过RLS限制
+      const response = await fetch('/api/pbl/projects', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: newProject.title.trim(),
+          description: newProject.description?.trim() || null,
           max_participants: newProject.max_participants,
-          status: 'active',
-          current_participants: 0
-        })
-        .select()
-        .single()
+        }),
+      })
 
-      if (error) {
-        console.error('Error creating project:', error)
-        alert('创建项目失败: ' + error.message)
+      const result = await response.json()
+
+      if (!response.ok) {
+        console.error('Error creating project:', result.error)
+        alert('创建项目失败: ' + (result.error || 'Unknown error'))
         return
       }
 
-      setProjects([data, ...projects])
+      setProjects([result.project, ...projects])
       setNewProject({ title: '', description: '', max_participants: 10 })
       setShowNewProjectForm(false)
       alert('项目创建成功！')
@@ -603,23 +606,34 @@ export default function FinalPage() {
     if (!editingItem) return
 
     try {
+      // 构建payload，过滤掉null值以避免Zod验证错误
+      const payload: Record<string, any> = {
+        slug: editingItem.slug.trim(),
+        title: editingItem.title.trim(),
+      }
+
+      // 只有当module_id有值时才添加
+      if (editingItem.module_id) {
+        payload.module_id = editingItem.module_id
+      }
+
+      // summary可以为null
+      if (editingItem.summary?.trim()) {
+        payload.summary = editingItem.summary.trim()
+      }
+
       const response = await fetch(`/api/cms/items/${editingItem.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          module_id: editingItem.module_id,
-          slug: editingItem.slug.trim(),
-          title: editingItem.title.trim(),
-          summary: editingItem.summary?.trim() || null
-        }),
+        body: JSON.stringify(payload),
       })
 
       const result = await response.json()
 
       if (!response.ok) {
-        alert('更新条目失败: ' + (result.error?.message || 'Unknown error'))
+        alert('更新条目失败: ' + (result.error || 'Unknown error'))
         return
       }
 
