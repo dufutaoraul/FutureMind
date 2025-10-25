@@ -14,20 +14,14 @@ export async function POST(req: NextRequest) {
       userId = user?.id ?? null
     } catch {}
 
-    const { message, project_id } = await req.json()
-    if (!message) return NextResponse.json({ error: 'MESSAGE_REQUIRED' }, { status: 400 })
+    const { chatInput, session_id, user_id } = await req.json()
+    if (!chatInput) return NextResponse.json({ error: 'CHAT_INPUT_REQUIRED' }, { status: 400 })
 
-    // 兼容多种字段命名，以适配不同 n8n 节点：
+    // 发送给 N8N 的 payload，按照要求格式
     const payload: Record<string, string> = {
-      message,
-      text: message,
-      prompt: message,
-      content: message,
-      project_id: project_id || '',
-      user_id: userId || 'guest',
-      // 添加回调URL，让n8n知道如何保存对话记录
-      callback_url: `${req.nextUrl.origin}/api/n8n/chat-callback`,
-      user_message: message, // 明确标识用户消息
+      chatInput,
+      session_id: session_id || crypto.randomUUID(), // 如果前端没传，生成一个
+      user_id: user_id || userId || 'guest',
     }
     const res = await fetch(N8N_CHAT_WEBHOOK, {
       method: 'POST',

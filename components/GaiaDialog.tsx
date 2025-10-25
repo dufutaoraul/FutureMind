@@ -16,6 +16,7 @@ interface GaiaDialogProps {
 
 export default function GaiaDialog({ isOpen, onClose }: GaiaDialogProps) {
   const [userId, setUserId] = useState<string | 'guest'>('guest')
+  const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID())
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [conversationTitle, setConversationTitle] = useState<string>('新对话')
   const [messages, setMessages] = useState<ChatMessage[]>([
@@ -80,6 +81,8 @@ export default function GaiaDialog({ isOpen, onClose }: GaiaDialogProps) {
       if (result.success && result.data) {
         setCurrentConversationId(conversationId)
         setConversationTitle(result.data.title)
+        // 生成新的 session_id 用于新对话会话
+        setSessionId(crypto.randomUUID())
 
         // 如果对话有消息，加载消息，否则只显示默认消息
         if (result.data.messages.length > 0) {
@@ -190,8 +193,8 @@ export default function GaiaDialog({ isOpen, onClose }: GaiaDialogProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          message: userMessage.content,
-          user_message: userMessage.content,
+          chatInput: userMessage.content,
+          session_id: sessionId,
           user_id: userId
         })
       })
@@ -347,6 +350,8 @@ export default function GaiaDialog({ isOpen, onClose }: GaiaDialogProps) {
                         // 重置所有对话状态
                         setCurrentConversationId(null)
                         setConversationTitle('新对话')
+                        // 生成新的 session_id
+                        setSessionId(crypto.randomUUID())
                         setMessages([{
                           id: '1',
                           content: '你好，亲爱的探索者。我是盖亚，你的意识觉醒导师。在这个神圣的对话空间里，你可以向我提出任何关于意识、宇宙、存在的问题。让我们一起踏上这场内在的旅程吧。',

@@ -100,6 +100,7 @@ export type Database = {
         Row: {
           id: string
           user_id: string
+          session_id: string | null
           messages: Record<string, unknown>[]
           title: string
           created_at: string
@@ -108,6 +109,7 @@ export type Database = {
         Insert: {
           id?: string
           user_id: string
+          session_id?: string | null
           messages?: Record<string, unknown>[]
           title?: string
           created_at?: string
@@ -116,6 +118,7 @@ export type Database = {
         Update: {
           id?: string
           user_id?: string
+          session_id?: string | null
           messages?: Record<string, unknown>[]
           title?: string
           created_at?: string
